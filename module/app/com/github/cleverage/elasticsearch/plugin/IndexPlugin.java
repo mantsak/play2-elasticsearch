@@ -9,6 +9,8 @@ import play.Plugin;
 import com.github.cleverage.elasticsearch.IndexClient;
 import com.github.cleverage.elasticsearch.IndexService;
 
+import javax.inject.Inject;
+
 /**
  * ElasticSearch PLugin for Play 2 written in Java.
  * User: nboire
@@ -19,6 +21,7 @@ public class IndexPlugin extends Plugin
     private final Application application;
     private IndexClient client = null;
 
+    @Inject
     public IndexPlugin(Application application)
     {
         this.application = application;
@@ -41,11 +44,18 @@ public class IndexPlugin extends Plugin
         client = new IndexClient(application);
 
         // Load indexName, indexType, indexMapping from annotation
-        client.config.loadFromAnnotations();
+        try {
+            client.config.loadFromAnnotations();
+        } catch (Exception e) {
+            client = null;
+            Logger.error("ElasticSearch: Error scanning for annotations", e);
+            throw e;
+        }
 
         try {
             client.start();
         } catch (Exception e) {
+            client = null;
             Logger.error("ElasticSearch : Error when starting ElasticSearch Client ",e);
         }
 

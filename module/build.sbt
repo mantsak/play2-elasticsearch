@@ -1,21 +1,28 @@
-import play.Project._
-import scala.Some
 import xerial.sbt.Sonatype.SonatypeKeys._
 import xerial.sbt.Sonatype._
 
+val scalaV = "2.11.6"
+
+scalaVersion in ThisBuild := scalaV
+
 name := "play2-elasticsearch"
 
-version := "1.4-SNAPSHOT"
+version := "1.5-SNAPSHOT"
+
+javacOptions := Seq("-Xlint:deprecation")
+
+
 
 libraryDependencies ++= Seq(
   javaCore,
+  specs2 % Test,
   // Add your project dependencies here
-  "org.elasticsearch" % "elasticsearch" % "1.4.1",
+  "junit" % "junit" % "4.12" % Test,
+  "org.easytesting" % "fest-assert" % "1.4" % Test,
+  "org.elasticsearch" % "elasticsearch" % "1.5.2",
   "org.codehaus.groovy" % "groovy-all" % "2.3.8",
   "org.apache.commons" % "commons-lang3" % "3.1"
 )
-
-play.Project.playJavaSettings
 
 sonatypeSettings
 
@@ -60,3 +67,5 @@ pomExtra := (
       </developer>
     </developers>)
 
+lazy val module = project.in(file("."))
+  .enablePlugins(PlayJava,PlayScala)
