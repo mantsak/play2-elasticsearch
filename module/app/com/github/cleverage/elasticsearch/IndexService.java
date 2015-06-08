@@ -456,7 +456,7 @@ public abstract class IndexService {
             }
             creator.execute().actionGet();
         } catch (Exception e) {
-            Logger.error("ElasticSearch : Index create error : " + e.toString());
+            Logger.error("ElasticSearch : Index create error for " + indexName + ": " + e.toString());
         }
     }
 

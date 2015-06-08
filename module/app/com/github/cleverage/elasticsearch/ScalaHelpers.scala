@@ -45,7 +45,7 @@ object ScalaHelpers {
      * Elasticsearch index used to index objects
      * Default is elasticsearch.index.name config value. Can be overriden
      */
-    val index: String = IndexService.INDEX_DEFAULT;
+    lazy val index: String = IndexService.INDEX_DEFAULT;
 
     /**
      * IndexQueryPath used to index objects built from index and indexType
@@ -185,7 +185,9 @@ object ScalaHelpers {
      * @param indexQuery
      * @return a Future of IndexResults
      */
-    def searchAsync(indexQuery: IndexQuery[T])(implicit executor : scala.concurrent.ExecutionContext): Future[IndexResults[T]] = indexQuery.fetchAsync(indexPath, reads)
+    def searchAsync(indexQuery: IndexQuery[T]
+                     )( implicit executor : scala.concurrent.ExecutionContext
+      ): Future[IndexResults[T]] = indexQuery.fetchAsync(indexPath, reads)
 
     /**
      * Refresh the index
@@ -353,5 +355,4 @@ object ScalaHelpers {
       )
     }
   }
-
 }

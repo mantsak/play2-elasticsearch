@@ -33,7 +33,7 @@ public class IndexConfig {
      *  Mode local or network
      */
     public Boolean local = false;
-    
+
     /**
      *  elasticsearch.client.sniff = true / false
      *  Sniff for nodes.
@@ -67,7 +67,7 @@ public class IndexConfig {
     public String[] indexNames = new String[0];
 
     /**
-     * Custom settings to apply when creating the index. ex: "{ analysis: { analyzer: { my_analyzer: { type : "custom", tokenizer: "standard" } } } }" 
+     * Custom settings to apply when creating the index. ex: "{ analysis: { analyzer: { my_analyzer: { type : "custom", tokenizer: "standard" } } } }"
      */
     public Map<String, String> indexSettings = new HashMap<String, String>();
 
