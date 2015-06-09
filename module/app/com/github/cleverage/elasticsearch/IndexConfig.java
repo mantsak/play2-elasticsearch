@@ -137,7 +137,7 @@ public class IndexConfig {
 
     private void loadSettingsFromConfig(String indexName) {
         String setting = application.configuration().getString("elasticsearch." + indexName + ".settings");
-        if(StringUtils.isNotEmpty(setting)) {
+        if(setting != null && StringUtils.isNotEmpty(setting)) {
             indexSettings.put(indexName, setting);
         }
     }
