@@ -11,6 +11,7 @@ import play.Logger;
 import play.libs.Json;
 
 
+import javax.inject.Inject;
 import java.util.*;
 
 
@@ -96,22 +97,23 @@ public class IndexConfig {
     /**
      * Play application
      */
-    public Application application;
+    public Application app;
 
-    public IndexConfig(Application app) {
-        this.application = app;
-        this.client = app.configuration().getString("elasticsearch.client");
-        this.sniffing = app.configuration().getBoolean("elasticsearch.sniff", true);
-        this.local = app.configuration().getBoolean("elasticsearch.local");
-        this.localConfig = app.configuration().getString("elasticsearch.config.resource");
-        this.clusterName = app.configuration().getString("elasticsearch.cluster.name");
+    @Inject
+    public IndexConfig(Application app, Configuration configuration) {
+        this.app= app;
+        this.client = configuration.getString("elasticsearch.client");
+        this.sniffing = configuration.getBoolean("elasticsearch.sniff", true);
+        this.local = configuration.getBoolean("elasticsearch.local");
+        this.localConfig = configuration.getString("elasticsearch.config.resource");
+        this.clusterName = configuration.getString("elasticsearch.cluster.name");
 
 
-        this.showRequest = app.configuration().getBoolean("elasticsearch.index.show_request", false);
-        this.dropOnShutdown = app.configuration().getBoolean("elasticsearch.index.dropOnShutdown", false);
-        this.indexClazzs = app.configuration().getString("elasticsearch.index.clazzs");
+        this.showRequest = configuration.getBoolean("elasticsearch.index.show_request", false);
+        this.dropOnShutdown = configuration.getBoolean("elasticsearch.index.dropOnShutdown", false);
+        this.indexClazzs = configuration.getString("elasticsearch.index.clazzs");
 
-        String indexNameConf = app.configuration().getString("elasticsearch.index.name");
+        String indexNameConf = configuration.getString("elasticsearch.index.name");
         if(indexNameConf != null) {
             LinkedList<String> indexNamesL = new LinkedList<String>();
             String[] indexNamesTab = indexNameConf.split(",");
@@ -124,10 +126,10 @@ public class IndexConfig {
             for (String indexName : indexNames) {
 
                 // Load settings
-                loadSettingsFromConfig(indexName);
+                loadSettingsFromConfig(indexName, configuration);
 
                 // Load Mapping from conf
-                loadMappingFromConfig(indexName);
+                loadMappingFromConfig(indexName, configuration);
             }
 
         } else {
@@ -135,8 +137,9 @@ public class IndexConfig {
         }
     }
 
-    private void loadSettingsFromConfig(String indexName) {
-        String setting = application.configuration().getString("elasticsearch." + indexName + ".settings");
+    private void loadSettingsFromConfig(String indexName, Configuration configuration) {
+        String setting = configuration.getString("elasticsearch." + indexName + ".settings");
+
         if(setting != null && StringUtils.isNotEmpty(setting)) {
             indexSettings.put(indexName, setting);
         }
@@ -155,7 +158,7 @@ public class IndexConfig {
                 // Loading class and annotation for set mapping if is present
                 Logger.debug("ElasticSearch : Registering class " + aClass);
 
-                klass = Class.forName(aClass, true, application.classloader());
+                klass = Class.forName(aClass, true, app.classloader());
                 Object o = klass.newInstance();
 
                 String indexType = getIndexType(o);
@@ -176,8 +179,8 @@ public class IndexConfig {
      * Load additional mappings from config entry "elasticsearch.index.mapping"
      * @param indexName
      */
-    private void loadMappingFromConfig(String indexName) {
-        Configuration mappingConfig = application.configuration().getConfig("elasticsearch." + indexName + ".mappings");
+    private void loadMappingFromConfig(String indexName, Configuration configuration) {
+        Configuration mappingConfig = configuration.getConfig("elasticsearch." + indexName + ".mappings");
         if (mappingConfig != null) {
             Map<String, Object> mappings = mappingConfig.asMap();
             for (String indexType : mappings.keySet()) {
@@ -231,7 +234,7 @@ public class IndexConfig {
             for (String load : toLoad) {
                 load = load.trim();
                 if (load.endsWith(".*")) {
-                    Reflections reflections = ReflectionsCache.getReflections(application.classloader(), load.substring(0, load.length() - 2));
+                    Reflections reflections = ReflectionsCache.getReflections(app.classloader(), load.substring(0, load.length() - 2));
                     for(Class c :reflections.getTypesAnnotatedWith(IndexName.class)){
                         classes.add(c.getName());
                     }

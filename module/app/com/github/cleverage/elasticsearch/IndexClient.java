@@ -8,6 +8,8 @@ import org.elasticsearch.node.NodeBuilder;
 import play.Application;
 import play.Logger;
 
+import javax.inject.Inject;
+
 import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
 
 public class IndexClient {
@@ -18,9 +20,10 @@ public class IndexClient {
 
     public static IndexConfig config;
 
-    public IndexClient(Application application) {
+    @Inject
+    public IndexClient(IndexConfig config) {
         // ElasticSearch config load from application.conf
-        this.config = new IndexConfig(application);
+        this.config = config;
     }
 
     public void start() throws Exception {
@@ -99,7 +102,7 @@ public class IndexClient {
 
         // set default settings
         settings.put("client.transport.sniff", config.sniffing);
-        
+
         if (config.clusterName != null) {
             settings.put("cluster.name", config.clusterName);
         }

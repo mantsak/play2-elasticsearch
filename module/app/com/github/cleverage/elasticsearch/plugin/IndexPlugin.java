@@ -3,11 +3,14 @@ package com.github.cleverage.elasticsearch.plugin;
 import org.elasticsearch.client.transport.NoNodeAvailableException;
 
 import play.Application;
+import play.Configuration;
 import play.Logger;
 import play.Plugin;
 
 import com.github.cleverage.elasticsearch.IndexClient;
 import com.github.cleverage.elasticsearch.IndexService;
+import play.inject.ApplicationLifecycle;
+import play.libs.F;
 
 import javax.inject.Inject;
 
@@ -16,36 +19,36 @@ import javax.inject.Inject;
  * User: nboire
  * Date: 12/05/12
  */
-public class IndexPlugin extends Plugin
-{
-    private final Application application;
+
+@javax.inject.Singleton
+public class IndexPlugin {
+    private final Configuration configuration;
     private IndexClient client = null;
 
     @Inject
-    public IndexPlugin(Application application)
-    {
-        this.application = application;
+    public IndexPlugin(Configuration configuration, IndexClient client, ApplicationLifecycle lifecycle) {
+        this.configuration = configuration;
+        this.client = client;
+        lifecycle.addStopHook(() -> {
+            this.onStop();
+            return F.Promise.pure(null);
+        });
+        onStart();
     }
 
     private boolean isPluginDisabled() {
-        String status =  application.configuration().getString("elasticsearch.plugin");
+        String status = configuration.getString("elasticsearch.plugin");
         return status != null && status.equals("disabled");
     }
 
-    @Override
     public boolean enabled() {
-        return isPluginDisabled() == false;
+        return !isPluginDisabled();
     }
 
-    @Override
-    public void onStart()
-    {
-        // ElasticSearch client start on local or network
-        client = new IndexClient(application);
-
+    public void onStart() {
         // Load indexName, indexType, indexMapping from annotation
         try {
-            client.config.loadFromAnnotations();
+            IndexClient.config.loadFromAnnotations();
         } catch (Exception e) {
             client = null;
             Logger.error("ElasticSearch: Error scanning for annotations", e);
@@ -56,13 +59,13 @@ public class IndexPlugin extends Plugin
             client.start();
         } catch (Exception e) {
             client = null;
-            Logger.error("ElasticSearch : Error when starting ElasticSearch Client ",e);
+            Logger.error("ElasticSearch : Error when starting ElasticSearch Client ", e);
         }
 
         // We catch these exceptions to allow application to start even if the module start fails
         try {
             // Create Indexs and Mappings if not Exists
-            String[] indexNames = client.config.indexNames;
+            String[] indexNames = IndexClient.config.indexNames;
             for (String indexName : indexNames) {
 
                 if (!IndexService.existsIndex(indexName)) {
@@ -78,22 +81,20 @@ public class IndexPlugin extends Plugin
 
         } catch (NoNodeAvailableException e) {
             Logger.error("ElasticSearch : No ElasticSearch node is available. Please check that your configuration is " +
-                    "correct, that you ES server is up and reachable from the network. Index has not been created and prepared.", e);
+                "correct, that you ES server is up and reachable from the network. Index has not been created and prepared.", e);
         } catch (Exception e) {
             Logger.error("ElasticSearch : An unexpected exception has occurred during index preparation. Index has not been created and prepared.", e);
         }
 
     }
 
-    @Override
-    public void onStop()
-    {
-        if(client!= null) {
+    public void onStop() {
+        if (client != null) {
             // Deleting index(s) if define in conf
-            if (client.config.dropOnShutdown) {
+            if (IndexClient.config.dropOnShutdown) {
                 String[] indexNames = client.config.indexNames;
                 for (String indexName : indexNames) {
-                    if(IndexService.existsIndex(indexName)) {
+                    if (IndexService.existsIndex(indexName)) {
                         IndexService.deleteIndex(indexName);
                     }
                 }
@@ -103,7 +104,7 @@ public class IndexPlugin extends Plugin
             try {
                 client.stop();
             } catch (Exception e) {
-                Logger.error("ElasticSearch : error when stop plugin ",e);
+                Logger.error("ElasticSearch : error when stop plugin ", e);
             }
         }
         Logger.info("ElasticSearch : Plugin has stopped");
