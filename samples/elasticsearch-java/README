@@ -1,4 +1,4 @@
-This is your new Play 2.0 application
-=====================================
+Sample application for Play 2.4.0 with module branch play24es15
+===============================================================
 
-This file will be packaged with your application, when using `play dist`.
+I'm trying to update this sample application to the newest module
