@@ -1,11 +1,20 @@
-import play.Project._
+name := """elasticsearch-java-sample"""
 
-name         := "elasticsearch-java-sample"
+version := "1.0-SNAPSHOT"
 
-version      := "1.0-SNAPSHOT"
+lazy val root = (project in file(".")).enablePlugins(PlayJava)
 
-play.Project.playJavaSettings
+scalaVersion := "2.11.6"
 
-lazy val esModule = RootProject(file("../../module"))
+libraryDependencies ++= Seq(
+  javaJdbc,
+  cache,
+  javaWs,
+  "com.clever-age" % "play2-elasticsearch" %"1.5-SNAPSHOT"
+)
 
-lazy val root = project.in(file(".")).dependsOn(esModule).aggregate(esModule)
+// Play provides two styles of routers, one expects its actions to be injected, the
+// other, legacy style, accesses its actions statically.
+routesGenerator := InjectedRoutesGenerator
+
+fork in run := true
